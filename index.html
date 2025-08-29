@@ -1,65 +1,107 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<title>LisoFlix – master.m3u8 directo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi LisoFlix Pluto</title>
 <style>
-  @import url("https://fonts.cdnfonts.com/css/netflix-sans");
-  :root{--netflix-red:#e50914;--netflix-black:#000;--netflix-dark:#141414;--white:#fff}
+  :root{--netflix-red:#e50914;--netflix-black:#000;--netflix-dark-gray:#141414;--netflix-medium-gray:#333;--netflix-light-gray:#808080;--netflix-white:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--netflix-black);font-family:"Netflix Sans",Helvetica,Arial,sans-serif;color:var(--white)}
-  header{background:#000;padding:14px 4%;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
-  .logo{font-size:1.8em;font-weight:bold}
-  .movie-list{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
-  .movie-card{width:200px;background:var(--netflix-dark);border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .2s}
-  .movie-card:hover{transform:scale(1.05)}
-  .movie-card img{width:100%;height:300px;object-fit:cover;background:#333}
-  .movie-card h3{padding:10px;font-size:1rem}
-  #player{width:100%;max-height:50vh;display:none;margin-bottom:10px}
+  body{background:var(--netflix-black);font-family:"Helvetica Neue",Arial,sans-serif;color:var(--netflix-white)}
+  header{background:rgba(0,0,0,1);padding:14px 4%;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
+  .logo{font-size:1.8em;font-weight:bold;color:var(--netflix-white)}
+  .logo span{color:var(--netflix-red);font-style:italic;transform:skewX(-10deg);display:inline-block}
+  .hero-banner{position:relative;height:60vh;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.8)),url("https://i.imgur.com/6KvUSqs.jpeg");background-size:cover;background-position:center;display:flex;align-items:center;padding:0 4%}
+  .hero-content{max-width:500px}
+  .hero-title{font-size:3rem;font-weight:bold;margin-bottom:15px;text-shadow:2px 2px 4px rgba(0,0,0,.8)}
+  .hero-description{font-size:1.2rem;margin-bottom:25px;line-height:1.4;text-shadow:1px 1px 2px rgba(0,0,0,.8)}
+  .hero-buttons{display:flex;gap:15px}
+  .btn-play,.btn-info{padding:12px 30px;border:none;border-radius:6px;font-size:1.1rem;font-weight:bold;cursor:pointer}
+  .btn-play{background:var(--netflix-white);color:var(--netflix-black)}
+  .btn-info{background:rgba(109,109,110,.7);color:var(--netflix-white)}
+  .carousel{display:flex;overflow-x:auto;gap:8px;padding:0 4% 20px 4%;scrollbar-width:none}
+  .carousel::-webkit-scrollbar{display:none}
+  .item{flex:0 0 200px;position:relative;cursor:pointer;transition:transform .3s}
+  .item:hover{transform:scale(1.08)}
+  .item img{width:100%;height:300px;object-fit:cover;border-radius:8px}
+  .item p{margin:8px 0;font-size:.9em;color:var(--netflix-light-gray)}
+  .category{margin-bottom:40px}
+  .category h2{margin:0 0 15px 4%;font-size:1.4em}
+  video{width:100%;max-height:50vh;display:none}
+  #player-controls{display:none;justify-content:center;gap:10px;padding:10px}
+  #player-controls button{background:var(--netflix-red);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-weight:bold;cursor:pointer}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">LisoFlix</div>
-  <nav><button class="active">Inicio</button></nav>
+  <div class="logo"><span>Mi</span> Liso<span>F</span>lix</div>
 </header>
 
-<video id="player" controls style="display:none"></video>
+<div id="player-controls">
+  <button onclick="playerPlay()">Reproducir</button>
+  <button onclick="playerPause()">Pausar</button>
+  <button onclick="playerStop()">Detener</button>
+</div>
+<video controls id="player"></video>
+
 <div id="conteudo"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js"></script>
 <script>
-/* 1. master.m3u8 directo (extraído previamente) */
-const peliculas = [
-  { tit: "Insumergible", img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/xc1s1pwrf8s4_master.m3u8" },
-  { tit: "Oppenheimer",  img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/o74agvehc0f5_master.m3u8" },
-  { tit: "Barbie",       img: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/q2x0mwe9_master.m3u8" }
-];
+const LISTA = 'https://raw.githubusercontent.com/HelmerLuzo/PlutoTV_HL/master/tv/m3u/PlutoTV_tv_BR.m3u';
 
-/* 2. Renderizado + reproducción */
-conteudo.innerHTML='';
-const lista=document.createElement('div');
-lista.className='movie-list';
-peliculas.forEach(p=>{
-  const card=document.createElement('div');
-  card.className='movie-card';
-  card.innerHTML=`<img src="${p.img}" alt="${p.tit}"/><h3>${p.tit}</h3>`;
-  card.onclick=()=>{
-    player.style.display='block';
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(p.master);
-      hls.attachMedia(player);
-    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
-      player.src = p.master;
+function playerPlay(){document.getElementById('player').play()}
+function playerPause(){document.getElementById('player').pause()}
+function playerStop(){const p=document.getElementById('player');p.pause();p.currentTime=0}
+function exibirPlayer(url){const p=document.getElementById('player');const c=document.getElementById('player-controls');p.src=url;p.style.display='block';c.style.display='flex';p.play();window.scrollTo({top:0,behavior:'smooth'})}
+
+async function cargarCanales(){
+  const res = await fetch(LISTA);
+  const texto = await res.text();
+  const lineas = texto.split('\n');
+  const conteudoDiv = document.getElementById('conteudo');
+  conteudoDiv.innerHTML='';
+
+  /* Hero banner */
+  const hero = document.createElement('div');
+  hero.className='hero-banner';
+  hero.innerHTML=`
+    <div class="hero-content">
+      <h1 class="hero-title">Mi LisoFlix Pluto</h1>
+      <p class="hero-description">Canales en vivo gratuitos y legales de Pluto TV.</p>
+      <div class="hero-buttons">
+        <button class="btn-play" onclick="document.querySelector('.carousel').scrollIntoView()">Ver canales</button>
+      </div>
+    </div>`;
+  conteudoDiv.appendChild(hero);
+
+  /* Categoría */
+  const cat = document.createElement('div');
+  cat.className='category';
+  cat.innerHTML='<h2>Canales Pluto TV</h2>';
+  const car = document.createElement('div');
+  car.className='carousel';
+
+  for(let i=0;i<lineas.length;i++){
+    const linea = lineas[i].trim();
+    if(linea.startsWith('#EXTINF:')){
+      const nombre = linea.split(',')[1] || 'Canal';
+      const url = lineas[i+1]?.trim();
+      if(!url) continue;
+
+      const item = document.createElement('div');
+      item.className='item';
+      item.innerHTML=`
+        <img src="https://via.placeholder.com/200x300/333/fff?text=${encodeURIComponent(nombre)}" alt="${nombre}">
+        <p>${nombre}</p>`;
+      item.onclick = () => exibirPlayer(url);
+      car.appendChild(item);
     }
-    player.play();
-  };
-  lista.appendChild(card);
-});
-conteudo.appendChild(lista);
+  }
+  cat.appendChild(car);
+  conteudoDiv.appendChild(cat);
+}
+cargarCanales();
 </script>
-
 </body>
 </html>
