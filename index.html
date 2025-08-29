@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mi LisoFlix</title>
+<title>Mi LisoFlix – Grilla Netflix</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -20,44 +20,47 @@
   .logo{font-size:1.8em;font-weight:bold}
   .logo span{color:var(--netflix-red);font-style:italic;transform:skewX(-10deg);display:inline-block}
 
-  .hero-banner{position:relative;height:60vh;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.8)),url("https://i.imgur.com/6KvUSqs.jpeg");background-size:cover;background-position:center;display:flex;align-items:center;padding:0 4%}
+  .hero-banner{height:60vh;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.8)),url("https://i.imgur.com/6KvUSqs.jpeg");background-size:cover;background-position:center;display:flex;align-items:center;padding:0 4%}
   .hero-content{max-width:500px}
-  .hero-title{font-size:3rem;font-weight:bold;margin-bottom:15px;text-shadow:2px 2px 4px rgba(0,0,0,.8)}
-  .hero-description{font-size:1.2rem;margin-bottom:25px;line-height:1.4;text-shadow:1px 1px 2px rgba(0,0,0,.8)}
+  .hero-title{font-size:3rem;font-weight:bold;text-shadow:2px 2px 4px rgba(0,0,0,.8)}
+  .hero-description{font-size:1.2rem;margin-top:10px;text-shadow:1px 1px 2px rgba(0,0,0,.8)}
 
-  .category{margin-bottom:40px}
-  .category h2{margin:0 0 15px 4%;font-size:1.4em}
+  /* SECCIÓN NETFLIX */
+  .seccion{margin-bottom:50px}
+  .seccion h2{margin:30px 0 10px 4%;font-size:1.4em}
 
-  /* Carrusel horizontal infinito */
-  .carousel{
+  /* FILA de carteles */
+  .fila{
     display:flex;
     overflow-x:auto;
     gap:12px;
-    padding:0 4% 30px 4%;
-    scroll-snap-type:x mandatory;
+    padding:0 4% 20px 4%;
     scrollbar-width:none;
   }
-  .carousel::-webkit-scrollbar{display:none;}
+  .fila::-webkit-scrollbar{display:none;}
 
-  .item{
-    flex:0 0 150px;
+  /* CARTEL */
+  .cartel{
+    flex:0 0 180px;           /* ancho fijo */
     cursor:pointer;
     transition:transform .3s;
-    scroll-snap-align:start;
   }
-  .item:hover{transform:scale(1.08);}
+  .cartel:hover{transform:scale(1.08);}
 
-  .item img{
+  .cartel img{
     width:100%;
-    height:225px;
+    height:270px;
     object-fit:cover;
     border-radius:6px;
-    box-shadow:0 4px 8px rgba(0,0,0,.5);
+    box-shadow:0 4px 8px rgba(0,0,0,.6);
   }
-  .item p{
-    margin-top:6px;
+
+  .cartel p{
+    margin-top:8px;
     font-size:.9em;
     color:var(--netflix-white);
+    text-align:left;
+    line-height:1.2;
   }
 
   video{width:100%;max-height:50vh;display:none}
@@ -71,13 +74,22 @@
 
 <video controls id="player" style="display:none"></video>
 
-<div id="conteudo"></div>
+<!-- Hero -->
+<div class="hero-banner">
+  <div class="hero-content">
+    <h1 class="hero-title">Descubre tu próxima película</h1>
+    <p class="hero-description">Desliza las filas y disfruta.</p>
+  </div>
+</div>
+
+<!-- Sección Netflix -->
+<div id="seccion"></div>
 
 <script>
-/* Cambia esta URL por tu propia lista .m3u / .w3u */
+/* Cambia la URL por tu propia lista .m3u o .w3u */
 const LISTA = 'https://raw.githubusercontent.com/XUPERPLAY/Lispe/main/Lis.m3u';
 
-/* Imágenes “oficiales” de Pluto (puedes ampliar) */
+/* Mapa de imágenes (puedes ampliar) */
 const IMAGENES = {
   'Pluto TV Cine':      'https://images.pluto.tv/channels/5f8eb6655244a50007d76a1e/colorLogoPNG.png',
   'Pluto TV Series':    'https://images.pluto.tv/channels/5f8eb66e3a34070007d7619e/colorLogoPNG.png',
@@ -85,7 +97,7 @@ const IMAGENES = {
   'Pluto TV Acción':    'https://images.pluto.tv/channels/5f8eb67c3499270007d8d6af/colorLogoPNG.png',
   'Pluto TV Drama':     'https://images.pluto.tv/channels/5f8eb6893499270007d8d6b0/colorLogoPNG.png',
   'Pluto TV Documentales':'https://images.pluto.tv/channels/5f8eb6923499270007d8d6b1/colorLogoPNG.png',
-  default: 'https://via.placeholder.com/150x225/333/fff?text=Canal'
+  default: 'https://via.placeholder.com/180x270/333/fff?text=Cartel'
 };
 
 function getImagen(nombre){
@@ -103,50 +115,41 @@ function exibirPlayer(url){
   v.scrollIntoView({behavior:'smooth'});
 }
 
-async function cargarCarrusel(){
+async function cargarGrilla(){
   const res = await fetch(LISTA);
   const texto = await res.text();
   const lineas = texto.split('\n');
-  const conteudoDiv = document.getElementById('conteudo');
-  conteudoDiv.innerHTML='';
+  const seccion = document.getElementById('seccion');
 
-  /* Hero */
-  const hero = document.createElement('div');
-  hero.className='hero-banner';
-  hero.innerHTML=`
-    <div class="hero-content">
-      <h1 class="hero-title">Mi LisoFlix</h1>
-      <p class="hero-description">Desliza para explorar canales y películas.</p>
-    </div>`;
-  conteudoDiv.appendChild(hero);
-
-  /* Carrusel horizontal */
-  const cat = document.createElement('div');
-  cat.className='category';
-  cat.innerHTML='<h2>Canales en línea</h2>';
-  const car = document.createElement('div');
-  car.className='carousel';
+  /* Crear fila única */
+  const filaDiv = document.createElement('div');
+  filaDiv.className='fila';
 
   for(let i=0;i<lineas.length;i++){
     const linea = lineas[i].trim();
     if(linea.startsWith('#EXTINF:')){
-      const nombre = linea.split(',')[1] || 'Canal';
+      const nombre = linea.split(',')[1] || 'Cartel';
       const url = lineas[i+1]?.trim();
       if(!url) continue;
 
-      const item = document.createElement('div');
-      item.className='item';
-      item.innerHTML=`
+      const cartel = document.createElement('div');
+      cartel.className='cartel';
+      cartel.innerHTML=`
         <img src="${getImagen(nombre)}" alt="${nombre}">
         <p>${nombre}</p>`;
-      item.onclick = () => exibirPlayer(url);
-      car.appendChild(item);
+      cartel.onclick = () => exibirPlayer(url);
+      filaDiv.appendChild(cartel);
     }
   }
-  cat.appendChild(car);
-  conteudoDiv.appendChild(cat);
+
+  /* Título + fila */
+  const tit = document.createElement('div');
+  tit.className='seccion';
+  tit.innerHTML='<h2>Mi catálogo</h2>';
+  tit.appendChild(filaDiv);
+  seccion.appendChild(tit);
 }
-cargarCarrusel();
+cargarGrilla();
 </script>
 </body>
 </html>
