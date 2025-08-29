@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<title>LisoFlix – Abrir reproductor real</title>
+<title>LisoFlix – master.m3u8 directo</title>
 <style>
   @import url("https://fonts.cdnfonts.com/css/netflix-sans");
   :root{--netflix-red:#e50914;--netflix-black:#000;--netflix-dark:#141414;--white:#fff}
@@ -15,6 +15,7 @@
   .movie-card:hover{transform:scale(1.05)}
   .movie-card img{width:100%;height:300px;object-fit:cover;background:#333}
   .movie-card h3{padding:10px;font-size:1rem}
+  #player{width:100%;max-height:50vh;display:none;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -24,15 +25,19 @@
   <nav><button class="active">Inicio</button></nav>
 </header>
 
+<video id="player" controls style="display:none"></video>
 <div id="conteudo"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js"></script>
 <script>
+/* 1. master.m3u8 directo (extraído previamente) */
 const peliculas = [
-  { tit: "Insumergible", img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", real: "https://filemoon.to/e/xc1s1pwrf8s4" },
-  { tit: "Oppenheimer",  img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", real: "https://filemoon.to/e/o74agvehc0f5" },
-  { tit: "Barbie",       img: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", real: "https://filemoon.to/e/q2x0mwe9" }
+  { tit: "Insumergible", img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/xc1s1pwrf8s4_master.m3u8" },
+  { tit: "Oppenheimer",  img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/o74agvehc0f5_master.m3u8" },
+  { tit: "Barbie",       img: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", master: "https://be7713.rcr82.waw05.i8yz83pn.com/hls2/03/09769/q2x0mwe9_master.m3u8" }
 ];
 
+/* 2. Renderizado + reproducción */
 conteudo.innerHTML='';
 const lista=document.createElement('div');
 lista.className='movie-list';
@@ -40,7 +45,17 @@ peliculas.forEach(p=>{
   const card=document.createElement('div');
   card.className='movie-card';
   card.innerHTML=`<img src="${p.img}" alt="${p.tit}"/><h3>${p.tit}</h3>`;
-  card.onclick=()=>window.open(p.real,'_blank');
+  card.onclick=()=>{
+    player.style.display='block';
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(p.master);
+      hls.attachMedia(player);
+    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+      player.src = p.master;
+    }
+    player.play();
+  };
   lista.appendChild(card);
 });
 conteudo.appendChild(lista);
