@@ -2,14 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi LisoFlix Pluto</title>
 <style>
   :root{--netflix-red:#e50914;--netflix-black:#000;--netflix-dark-gray:#141414;--netflix-medium-gray:#333;--netflix-light-gray:#808080;--netflix-white:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--netflix-black);font-family:"Helvetica Neue",Arial,sans-serif;color:var(--netflix-white)}
-  header{background:rgba(0,0,0,1);padding:14px 4%;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
-  .logo{font-size:1.8em;font-weight:bold;color:var(--netflix-white)}
+  body{background:var(--netflix-black);color:var(--netflix-white);font-family:"Helvetica Neue",Arial,sans-serif}
+  header{background:#000;padding:14px 4%;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
+  .logo{font-size:1.8em;font-weight:bold}
   .logo span{color:var(--netflix-red);font-style:italic;transform:skewX(-10deg);display:inline-block}
   .hero-banner{position:relative;height:60vh;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.8)),url("https://i.imgur.com/6KvUSqs.jpeg");background-size:cover;background-position:center;display:flex;align-items:center;padding:0 4%}
   .hero-content{max-width:500px}
@@ -19,17 +18,15 @@
   .btn-play,.btn-info{padding:12px 30px;border:none;border-radius:6px;font-size:1.1rem;font-weight:bold;cursor:pointer}
   .btn-play{background:var(--netflix-white);color:var(--netflix-black)}
   .btn-info{background:rgba(109,109,110,.7);color:var(--netflix-white)}
+  .category{margin-bottom:40px}
+  .category h2{margin:0 0 15px 4%;font-size:1.4em}
   .carousel{display:flex;overflow-x:auto;gap:8px;padding:0 4% 20px 4%;scrollbar-width:none}
   .carousel::-webkit-scrollbar{display:none}
   .item{flex:0 0 200px;position:relative;cursor:pointer;transition:transform .3s}
   .item:hover{transform:scale(1.08)}
   .item img{width:100%;height:300px;object-fit:cover;border-radius:8px}
   .item p{margin:8px 0;font-size:.9em;color:var(--netflix-light-gray)}
-  .category{margin-bottom:40px}
-  .category h2{margin:0 0 15px 4%;font-size:1.4em}
   video{width:100%;max-height:50vh;display:none}
-  #player-controls{display:none;justify-content:center;gap:10px;padding:10px}
-  #player-controls button{background:var(--netflix-red);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-weight:bold;cursor:pointer}
 </style>
 </head>
 <body>
@@ -38,22 +35,38 @@
   <div class="logo"><span>Mi</span> Liso<span>F</span>lix</div>
 </header>
 
-<div id="player-controls">
-  <button onclick="playerPlay()">Reproducir</button>
-  <button onclick="playerPause()">Pausar</button>
-  <button onclick="playerStop()">Detener</button>
-</div>
-<video controls id="player"></video>
-
+<video controls id="player" style="display:none"></video>
 <div id="conteudo"></div>
 
 <script>
 const LISTA = 'https://raw.githubusercontent.com/HelmerLuzo/PlutoTV_HL/master/tv/m3u/PlutoTV_tv_BR.m3u';
 
-function playerPlay(){document.getElementById('player').play()}
-function playerPause(){document.getElementById('player').pause()}
-function playerStop(){const p=document.getElementById('player');p.pause();p.currentTime=0}
-function exibirPlayer(url){const p=document.getElementById('player');const c=document.getElementById('player-controls');p.src=url;p.style.display='block';c.style.display='flex';p.play();window.scrollTo({top:0,behavior:'smooth'})}
+/* Mapa de imágenes “bonitas” para algunos canales (puedes ampliar) */
+const IMAGENES = {
+  'Pluto TV Cine': 'https://images.pluto.tv/channels/5f8eb6655244a50007d76a1e/colorLogoPNG.png',
+  'Pluto TV Series': 'https://images.pluto.tv/channels/5f8eb66e3a34070007d7619e/colorLogoPNG.png',
+  'Pluto TV Comedia': 'https://images.pluto.tv/channels/5f8eb6743499270007d8d6ad/colorLogoPNG.png',
+  'Pluto TV Acción': 'https://images.pluto.tv/channels/5f8eb67c3499270007d8d6af/colorLogoPNG.png',
+  'Pluto TV Drama': 'https://images.pluto.tv/channels/5f8eb6893499270007d8d6b0/colorLogoPNG.png',
+  'Pluto TV Documentales': 'https://images.pluto.tv/channels/5f8eb6923499270007d8d6b1/colorLogoPNG.png',
+  // fallback genérico
+  default: 'https://via.placeholder.com/200x300/333/fff?text=Canal'
+};
+
+function getImagen(nombre){
+  for(const key in IMAGENES){
+    if(nombre.toLowerCase().includes(key.toLowerCase())) return IMAGENES[key];
+  }
+  return IMAGENES.default;
+}
+
+function exibirPlayer(url){
+  const v=document.getElementById('player');
+  v.src=url;
+  v.style.display='block';
+  v.play();
+  v.scrollIntoView({behavior:'smooth'});
+}
 
 async function cargarCanales(){
   const res = await fetch(LISTA);
@@ -75,7 +88,7 @@ async function cargarCanales(){
     </div>`;
   conteudoDiv.appendChild(hero);
 
-  /* Categoría */
+  /* Categoría y carrusel */
   const cat = document.createElement('div');
   cat.className='category';
   cat.innerHTML='<h2>Canales Pluto TV</h2>';
@@ -92,7 +105,7 @@ async function cargarCanales(){
       const item = document.createElement('div');
       item.className='item';
       item.innerHTML=`
-        <img src="https://via.placeholder.com/200x300/333/fff?text=${encodeURIComponent(nombre)}" alt="${nombre}">
+        <img src="${getImagen(nombre)}" alt="${nombre}">
         <p>${nombre}</p>`;
       item.onclick = () => exibirPlayer(url);
       car.appendChild(item);
