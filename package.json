@@ -1,7 +1,0 @@
-{
-  "name": "liso-flix",
-  "type": "module",
-  "dependencies": {
-    "playwright-aws-lambda": "^0.10.0"
-  }
-}
