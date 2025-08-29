@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<title>LisoFlix – Vercel Ready</title>
+<title>LisoFlix – Reproductor propio</title>
 <style>
   @import url("https://fonts.cdnfonts.com/css/netflix-sans");
   :root{--netflix-red:#e50914;--netflix-black:#000;--netflix-dark:#141414;--white:#fff}
@@ -10,17 +10,12 @@
   body{background:var(--netflix-black);font-family:"Netflix Sans",Helvetica,Arial,sans-serif;color:var(--white)}
   header{background:#000;padding:14px 4%;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
   .logo{font-size:1.8em;font-weight:bold}
-  nav{display:flex;gap:14px}
-  nav button{background:none;border:none;color:#aaa;font-weight:bold;cursor:pointer}
-  nav button.active{color:var(--white);border-bottom:3px solid var(--netflix-red)}
-  #player{width:100%;max-height:50vh;display:none;margin-bottom:10px}
-  #player-controls{display:none;justify-content:center;gap:10px;margin:10px 0;flex-wrap:wrap}
-  #player-controls button{background:var(--netflix-red);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-weight:bold;cursor:pointer}
   .movie-list{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
   .movie-card{width:200px;background:var(--netflix-dark);border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .2s}
   .movie-card:hover{transform:scale(1.05)}
   .movie-card img{width:100%;height:300px;object-fit:cover;background:#333}
   .movie-card h3{padding:10px;font-size:1rem}
+  #player{width:100%;max-height:50vh;display:none;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -31,25 +26,14 @@
 </header>
 
 <video id="player" controls style="display:none"></video>
-<div id="player-controls" style="display:none">
-  <button onclick="player.play()">Reproducir</button>
-  <button onclick="player.pause()">Pausar</button>
-  <button onclick="player.currentTime=0">Detener</button>
-  <button onclick="player.currentTime-=10">-10 s</button>
-  <button onclick="player.currentTime+=10">+10 s</button>
-</div>
-
 <div id="conteudo"></div>
 
 <script>
-/* Lista de películas (puedes ampliar) */
 const peliculas = [
   { tit: "Insumergible", img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", url: "https://filemoon.to/d/xc1s1pwrf8s4/Insumergible" },
-  { tit: "Oppenheimer",  img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", url: "https://filemoon.to/d/o74agvehc0f5/Oppenheimer" },
-  { tit: "Barbie",       img: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", url: "https://filemoon.to/d/q2x0mwe9/Barbie" }
+  { tit: "Oppenheimer",  img: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", url: "https://filemoon.to/d/o74agvehc0f5/Oppenheimer" }
 ];
 
-/* Renderizado instantáneo */
 conteudo.innerHTML='';
 const lista=document.createElement('div');
 lista.className='movie-list';
@@ -57,9 +41,8 @@ peliculas.forEach(p=>{
   const card=document.createElement('div');
   card.className='movie-card';
   card.innerHTML=`<img src="${p.img}" alt="${p.tit}"/><h3>${p.tit}</h3>`;
-  /* Redirigimos al backend /api/stream */
   card.onclick=()=>{
-    player.src=`/api/stream?url=${encodeURIComponent(p.url)}`;
+    player.src=`/api/resolve?url=${encodeURIComponent(p.url)}`;
     player.style.display='block';
     player.play();
   };
